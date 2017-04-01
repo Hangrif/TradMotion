@@ -1,0 +1,120 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+
+<script>
+	var oladata;
+	var ws;
+	var focusListener;
+	var blurListener;
+	var xoff = 0, yoff = 0;
+	
+	// Create the socket with event handlers
+function init() {
+  // Create and open the socket
+  ws = new WebSocket("ws://localhost:6437/v6.json");//use latest
+  
+  // On successful connection
+  ws.onopen = function(event) {
+    var enableMessage = JSON.stringify({enableGestures: true});
+    ws.send(enableMessage); // Enable gestures
+    ws.send(JSON.stringify({focused: true})); // claim focus
+    
+    focusListener = window.addEventListener('focus', function(e) {
+        ws.send(JSON.stringify({focused: true})); // claim focus
+     });
+
+    blurListener = window.addEventListener('blur', function(e) {
+         ws.send(JSON.stringify({focused: false})); // relinquish focus
+     });
+  };
+
+  // On message received
+  ws.onmessage = function(event) {
+  
+	oladata = JSON.parse(event.data);
+	
+	if(oladata.hands != 0)
+	{
+		var x = oladata.hands[0].palmPosition[0] + xoff;
+		var y = oladata.hands[0].palmPosition[2] + yoff;
+		moveDiv(x, y);
+	}
+	
+	if( oladata.hands.length > 0 && oladata.hands[0].pinchStrength >= 0.99)
+	{
+		document.getElementById("coucou").innerHTML = "Pinch Strength: " + oladata.hands[0].pinchStrength;
+	}
+	else
+	{
+		document.getElementById("coucou").innerHTML = "TEST";
+	}
+
+	};
+
+  // On socket close
+  ws.onclose = function(event) {
+    ws = null;
+  }
+
+  // On socket error
+  ws.onerror = function(event) {
+    alert("Received error");
+  };
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+function moveDiv(x_pos,y_pos){
+    var d = document.getElementById('coucou');
+    d.style.left = x_pos + "px";
+    d.style.top = y_pos + "px";
+}
+
+//set the var to the good start value
+var isCtrl = document.onkeyup=function(e) {
+    return e.which == 17
+};
+
+//set ctrl state
+document.onkeyup=function(e) {
+    if(e.which == 17) isCtrl=false;
+}
+
+document.onkeydown=function(e){
+    if(e.which == 17)
+	{
+		isCtrl=true;
+	}
+    if(e.which == 82 && !isCtrl) {
+         if(oladata.hands.length != 0)
+		 {
+			var w = window.innerWidth / 2;
+			var h = window.innerHeight / 2;
+			xoff = w - oladata.hands[0].palmPosition[0];
+			yoff = h - oladata.hands[0].palmPosition[2];
+		 }
+    }
+}
+
+</script>
+
+
+
+<style>
+div.absolute {
+    position: absolute;
+    left: 450px;
+    top: 80px;
+    right: 0;
+}
+</style>
+
+<html>
+<body onload="init();" >
+<div  class="absolute" id="coucou">
+TEST
+</div>
+</body>
+</html>

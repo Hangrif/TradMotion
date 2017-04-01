@@ -5,7 +5,13 @@
 	var ws;
 	var focusListener;
 	var blurListener;
-	var xoff = 0, yoff = 0;
+	var Lx,Ly,Hx,Hy;
+	var w = window.innerWidth;
+	var h = window.innerHeight;
+	
+//remap values from [low1,high1] to [low2,high2]	
+function rmap(value, low1, high1, low2, high2)
+{ return low2 + (value - low1) * (high2 - low2) / (high1 - low1); }
 	
 	// Create the socket with event handlers
 function init() {
@@ -34,8 +40,8 @@ function init() {
 	
 	if(oladata.hands != 0)
 	{
-		var x = oladata.hands[0].palmPosition[0] + xoff;
-		var y = oladata.hands[0].palmPosition[2] + yoff;
+		var x = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
+		var y = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
 		moveDiv(x, y);
 	}
 	
@@ -90,10 +96,22 @@ document.onkeydown=function(e){
     if(e.which == 82 && !isCtrl) {
          if(oladata.hands.length != 0)
 		 {
-			var w = window.innerWidth / 2;
-			var h = window.innerHeight / 2;
-			xoff = w - oladata.hands[0].palmPosition[0];
-			yoff = h - oladata.hands[0].palmPosition[2];
+			if(oladata.hands[0].palmPosition[0] < Lx)
+			{
+				Lx = oladata.hands[0].palmPosition[0];
+			}
+			if(oladata.hands[0].palmPosition[2] < Ly)
+			{
+				Ly = oladata.hands[0].palmPosition[2];
+			}
+			if(oladata.hands[0].palmPosition[0] > Hx)
+			{
+				Lx = oladata.hands[0].palmPosition[0];
+			}
+			if(oladata.hands[0].palmPosition[2] > Hy)
+			{
+				Ly = oladata.hands[0].palmPosition[2];
+			}
 		 }
     }
 }

@@ -38,23 +38,41 @@ function init() {
 
 		oladata = JSON.parse(event.data);
 		var x,y;
-		if(oladata.hands != 0)
+		if(oladata.hands.length != 0)
 		{
 			x = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
 			y = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
-			moveDiv(x, y);
+			moveDiv(x, y, "hand0");
+			if(oladata.hands.length == 2)
+			{
+				var fle = document.getElementById("hand1");
+				fle.style.display = 'inline';
+				x = remap(oladata.hands[1].palmPosition[0], Lx, Hx, 0, w);
+				y = remap(oladata.hands[1].palmPosition[2], Ly, Hy, 0, h);
+				moveDiv(x, y, "hand1");
+			}
+			else
+			{
+				var fle = document.getElementById("hand1");
+				fle.style.display = 'none';
+			}
 		}
 
-		if( oladata.hands.length > 0 && oladata.hands[0].pinchStrength >= 0.99)
+		if( oladata.hands.length >= 1 && oladata.hands[0].pinchStrength >= 0.99)
 		{
 			//document.getElementById("coucou").innerHTML = "Pinch Strength: " + oladata.hands[0].pinchStrength;
-			console.log("x: " + x + " y: " + y);
-			var but = document.elementFromPoint(x-1, y-1);
-			console.log(but);
-			but.click();
+			x0 = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
+			y0 = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
+			var but0 = document.elementFromPoint(x0-1, y0-1);
+			but0.click();
 		}
-		else
+
+		if(oladata.hands.length == 2 && oladata.hands[1].pinchStrength >= 0.99)
 		{
+			x1 = remap(oladata.hands[1].palmPosition[0], Lx, Hx, 0, w);
+			y1 = remap(oladata.hands[1].palmPosition[2], Ly, Hy, 0, h);
+			var but1 = document.elementFromPoint(x1-1, y1-1);
+			but1.click();
 		}
 
 	};
@@ -75,8 +93,8 @@ function init() {
 /////////////////////////////////////////////////////////////////////////////////////
 
 
-function moveDiv(x_pos,y_pos){
-	var d = document.getElementById('coucou');
+function moveDiv(x_pos, y_pos, tag){
+	var d = document.getElementById(tag);
 	d.style.left = x_pos + "px";
 	d.style.top = y_pos + "px";
 }
@@ -125,8 +143,20 @@ document.onkeydown=function(e){
 }
 
 function tored() {
-    document.body.style.backgroundColor = "red";
+	document.body.style.backgroundColor = "red";
 }
+
+onmousedown = function(e) {
+	while(oladata.hands[0].pinchStrength >= 0.99)
+	{}
+};
+
+onmousemove = function(e) {
+};
+
+onmouseup = function(e) {
+	oladata.hands[0].pinchStrength = 0;
+};
 
 </script>
 
@@ -139,18 +169,33 @@ div.absolute {
 	top: 80px;
 	right: 0;
 }
+
+
+div.picture2 {
+	width:16px; /*width of your image*/
+	height:16px; /*height of your image*/
+	background-image:url('arrowr.png');
+	margin:0; /* If you want no margin */
+	padding:0; /*if your want to padding */
+	display:none;
+}
+
 div.picture1 {
-   width:16px; /*width of your image*/
-   height:16px; /*height of your image*/
-   background-image:url('arrow.png');
-   margin:0; /* If you want no margin */
-   padding:0; /*if your want to padding */
+	width:16px; /*width of your image*/
+	height:16px; /*height of your image*/
+	background-image:url('arrow.png');
+	margin:0; /* If you want no margin */
+	padding:0; /*if your want to padding */
 }
 </style>
 
 <html>
 	<body onload="init();" >
-		<div class="absolute picture1" id="coucou" width="16" height="16"></div>
+		<div class="absolute picture1" id="hand0" width="16" height="16"></div>
+
+		<div class="absolute picture2" id="hand1" width="16" height="16"></div>
+
 		<button class="absolute" onclick="tored()">Click me</button>
+		asoethuaseotuhatoehusaotehu snatoeh usatoehu santoeu aosentuh aosentuaeunstahoe usaoteuasetuh ae
 	</body>
 </html>

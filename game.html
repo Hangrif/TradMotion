@@ -1,0 +1,228 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+var objon;
+var ho;
+var oladata;
+var ws;
+var focusListener;
+var blurListener;
+var Lx = -186, Ly = -106, Hx = 75, Hy = 95;
+var w = window.innerWidth;
+var h = window.innerHeight;
+
+//remap values from [low1,high1] to [low2,high2]	
+function remap(value, low1, high1, low2, high2)
+{ return low2 + (value - low1) * (high2 - low2) / (high1 - low1); }
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Create the socket with event handlers
+function init() {
+	// Create and open the socket
+	ws = new WebSocket("ws://localhost:6437/v6.json");//use latest
+
+	// On successful connection
+	ws.onopen = function(event) {
+		var enableMessage = JSON.stringify({enableGestures: true});
+		ws.send(enableMessage); // Enable gestures
+		ws.send(JSON.stringify({focused: true})); // claim focus
+
+		focusListener = window.addEventListener('focus', function(e) {
+			ws.send(JSON.stringify({focused: true})); // claim focus
+		});
+
+		blurListener = window.addEventListener('blur', function(e) {
+			ws.send(JSON.stringify({focused: false})); // relinquish focus
+		});
+	};
+
+	// On message received
+	ws.onmessage = function(event) {
+
+		oladata = JSON.parse(event.data);
+		var x,y;
+
+		ho = document.getElementsByClassName("modebar modebar--hover");
+		if(ho.length > 0)
+		{
+			ho[0].className = "modebar";
+		}	
+
+
+		if(oladata.hands.length != 0)
+		{
+			x = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
+			y = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
+			moveDiv(x, y, "hand0");
+			if(oladata.hands.length == 2)
+			{
+				var fle = document.getElementById("hand1");
+				fle.style.display = 'inline';
+				x = remap(oladata.hands[1].palmPosition[0], Lx, Hx, 0, w);
+				y = remap(oladata.hands[1].palmPosition[2], Ly, Hy, 0, h);
+				moveDiv(x, y, "hand1");
+			}
+			else
+			{
+				var fle = document.getElementById("hand1");
+				fle.style.display = 'none';
+			}
+		}
+
+		if( oladata.hands.length >= 1 && oladata.hands[0].pinchStrength >= 0.99)
+		{
+			//document.getElementById("coucou").innerHTML = "Pinch Strength: " + oladata.hands[0].pinchStrength;
+			x0 = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
+			y0 = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
+			var but0 = document.elementFromPoint(x0-1, y0-1);
+			objon = but0;
+			but0.click();
+		}
+
+		if(oladata.hands.length == 2 && oladata.hands[1].pinchStrength >= 0.99)
+		{
+			x1 = remap(oladata.hands[1].palmPosition[0], Lx, Hx, 0, w);
+			y1 = remap(oladata.hands[1].palmPosition[2], Ly, Hy, 0, h);
+			var but1 = document.elementFromPoint(x1-1, y1-1);
+			but1.click();
+		}
+
+	};
+
+	// On socket close
+	ws.onclose = function(event) {
+		ws = null;
+	}
+
+	// On socket error
+	ws.onerror = function(event) {
+		alert("Received error");
+	};
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+function moveDiv(x_pos, y_pos, tag){
+	var d = document.getElementById(tag);
+	d.style.left = x_pos + "px";
+	d.style.top = y_pos + "px";
+}
+
+//set the var to the good start value
+var isCtrl = document.onkeyup=function(e) {
+	return e.which == 17
+};
+
+//set ctrl state
+document.onkeyup=function(e) {
+	if(e.which == 17) isCtrl=false;
+}
+
+document.onkeydown=function(e){
+	if(e.which == 17)
+	{
+		isCtrl=true;
+	}
+	if(e.which == 82 && !isCtrl) {
+		if(oladata.hands.length != 0)
+		{
+			//console.log("x: " + oladata.hands[0].palmPosition[0]);
+			//console.log("y: " + oladata.hands[0].palmPosition[2]);
+
+			if(oladata.hands[0].palmPosition[0] < Lx)
+			{
+				Lx = oladata.hands[0].palmPosition[0];
+			}
+			if(oladata.hands[0].palmPosition[2] < Ly)
+			{
+				Ly = oladata.hands[0].palmPosition[2];
+			}
+			if(oladata.hands[0].palmPosition[0] > Hx)
+			{
+				Hx = oladata.hands[0].palmPosition[0];
+				console.log(Hx);
+			}
+			if(oladata.hands[0].palmPosition[2] > Hy)
+			{
+				Hy = oladata.hands[0].palmPosition[2];
+				console.log(Hy);
+			}
+		}
+	}
+}
+
+function tored() {
+	var st = document.body.style.backgroundColor;
+	if ( st == "red")
+	{
+		document.body.style.backgroundColor = "white";
+	}
+	else
+	{
+		document.body.style.backgroundColor = "red";
+	}
+	var f = document.getElementById("fuck");
+	f.style.left = getRandomInt(0,w-30);
+	f.style.top = getRandomInt(0,h-30);
+}
+
+
+
+
+</script>
+
+
+
+<style>
+div.absolute {
+	position: absolute;
+	z-index: 10;
+	left: 450px;
+	top: 80px;
+	right: 0;
+}
+
+
+div.picture2 {
+	width:16px; /*width of your image*/
+	height:16px; /*height of your image*/
+	background-image:url('arrowr.png');
+	margin:0; /* If you want no margin */
+	padding:0; /*if your want to padding */
+	display:none;
+}
+
+div.picture1 {
+	width:16px; /*width of your image*/
+	height:16px; /*height of your image*/
+	background-image:url('arrow.png');
+	margin:0; /* If you want no margin */
+	padding:0; /*if your want to padding */
+}
+</style>
+
+<html>
+	<body onload="init();" >
+		<div class="absolute picture1" id="hand0" width="16" height="16"></div>
+
+		<div class="absolute picture2" id="hand1" width="16" height="16"></div>
+
+		<div class="absolute" left="300px" top="400px" id="fuck" > <button class="absolute" onclick="tored()">Click me</button> </div>
+		asoethuaseotuhatoehusaotehu snatoeh usatoehu santoeu aosentuh aosentuaeunstahoe usaoteuasetuh ae
+		<div id="tester" style="width:1000px;height:600px;"></div>
+	</body>
+	<script>
+
+TESTER = document.getElementById('tester');
+Plotly.plot( TESTER, [{
+	x: [1, 2, 3, 4, 5],
+	y: [1, 2, 4, 8, 16] }], {
+		margin: { t: 0 } } );
+	</script>
+</html>

@@ -37,21 +37,24 @@ function init() {
 	ws.onmessage = function(event) {
 
 		oladata = JSON.parse(event.data);
-
+		var x,y;
 		if(oladata.hands != 0)
 		{
-			var x = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
-			var y = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
+			x = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
+			y = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
 			moveDiv(x, y);
 		}
 
 		if( oladata.hands.length > 0 && oladata.hands[0].pinchStrength >= 0.99)
 		{
-			document.getElementById("coucou").innerHTML = "Pinch Strength: " + oladata.hands[0].pinchStrength;
+			//document.getElementById("coucou").innerHTML = "Pinch Strength: " + oladata.hands[0].pinchStrength;
+			console.log("x: " + x + " y: " + y);
+			var but = document.elementFromPoint(x-1, y-1);
+			console.log(but);
+			but.click();
 		}
 		else
 		{
-			document.getElementById("coucou").innerHTML = "TEST";
 		}
 
 	};
@@ -121,6 +124,10 @@ document.onkeydown=function(e){
 	}
 }
 
+function tored() {
+    document.body.style.backgroundColor = "red";
+}
+
 </script>
 
 
@@ -132,12 +139,18 @@ div.absolute {
 	top: 80px;
 	right: 0;
 }
+div.picture1 {
+   width:16px; /*width of your image*/
+   height:16px; /*height of your image*/
+   background-image:url('arrow.png');
+   margin:0; /* If you want no margin */
+   padding:0; /*if your want to padding */
+}
 </style>
 
 <html>
 	<body onload="init();" >
-		<div  class="absolute" id="coucou">
-			TEST
-		</div>
+		<div class="absolute picture1" id="coucou" width="16" height="16"></div>
+		<button class="absolute" onclick="tored()">Click me</button>
 	</body>
 </html>

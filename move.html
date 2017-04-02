@@ -1,70 +1,70 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-	var oladata;
-	var ws;
-	var focusListener;
-	var blurListener;
-	var Lx = -100, Ly = -100, Hx = 0, Hy = 0;
-	var w = window.innerWidth;
-	var h = window.innerHeight;
-	
+var oladata;
+var ws;
+var focusListener;
+var blurListener;
+var Lx = -100, Ly = -100, Hx = -100, Hy = -100;
+var w = window.innerWidth;
+var h = window.innerHeight;
+
 //remap values from [low1,high1] to [low2,high2]	
 function remap(value, low1, high1, low2, high2)
 { return low2 + (value - low1) * (high2 - low2) / (high1 - low1); }
-	
-	// Create the socket with event handlers
+
+// Create the socket with event handlers
 function init() {
-  // Create and open the socket
-  ws = new WebSocket("ws://localhost:6437/v6.json");//use latest
-  
-  // On successful connection
-  ws.onopen = function(event) {
-    var enableMessage = JSON.stringify({enableGestures: true});
-    ws.send(enableMessage); // Enable gestures
-    ws.send(JSON.stringify({focused: true})); // claim focus
-    
-    focusListener = window.addEventListener('focus', function(e) {
-        ws.send(JSON.stringify({focused: true})); // claim focus
-     });
+	// Create and open the socket
+	ws = new WebSocket("ws://localhost:6437/v6.json");//use latest
 
-    blurListener = window.addEventListener('blur', function(e) {
-         ws.send(JSON.stringify({focused: false})); // relinquish focus
-     });
-  };
+	// On successful connection
+	ws.onopen = function(event) {
+		var enableMessage = JSON.stringify({enableGestures: true});
+		ws.send(enableMessage); // Enable gestures
+		ws.send(JSON.stringify({focused: true})); // claim focus
 
-  // On message received
-  ws.onmessage = function(event) {
-  
-	oladata = JSON.parse(event.data);
-	
-	if(oladata.hands != 0)
-	{
-		var x = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
-		var y = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
-		moveDiv(x, y);
-	}
-	
-	if( oladata.hands.length > 0 && oladata.hands[0].pinchStrength >= 0.99)
-	{
-		document.getElementById("coucou").innerHTML = "Pinch Strength: " + oladata.hands[0].pinchStrength;
-	}
-	else
-	{
-		document.getElementById("coucou").innerHTML = "TEST";
-	}
+		focusListener = window.addEventListener('focus', function(e) {
+			ws.send(JSON.stringify({focused: true})); // claim focus
+		});
+
+		blurListener = window.addEventListener('blur', function(e) {
+			ws.send(JSON.stringify({focused: false})); // relinquish focus
+		});
+	};
+
+	// On message received
+	ws.onmessage = function(event) {
+
+		oladata = JSON.parse(event.data);
+
+		if(oladata.hands != 0)
+		{
+			var x = remap(oladata.hands[0].palmPosition[0], Lx, Hx, 0, w);
+			var y = remap(oladata.hands[0].palmPosition[2], Ly, Hy, 0, h);
+			moveDiv(x, y);
+		}
+
+		if( oladata.hands.length > 0 && oladata.hands[0].pinchStrength >= 0.99)
+		{
+			document.getElementById("coucou").innerHTML = "Pinch Strength: " + oladata.hands[0].pinchStrength;
+		}
+		else
+		{
+			document.getElementById("coucou").innerHTML = "TEST";
+		}
 
 	};
 
-  // On socket close
-  ws.onclose = function(event) {
-    ws = null;
-  }
+	// On socket close
+	ws.onclose = function(event) {
+		ws = null;
+	}
 
-  // On socket error
-  ws.onerror = function(event) {
-    alert("Received error");
-  };
+	// On socket error
+	ws.onerror = function(event) {
+		alert("Received error");
+	};
 }
 
 
@@ -73,29 +73,32 @@ function init() {
 
 
 function moveDiv(x_pos,y_pos){
-    var d = document.getElementById('coucou');
-    d.style.left = x_pos + "px";
-    d.style.top = y_pos + "px";
+	var d = document.getElementById('coucou');
+	d.style.left = x_pos + "px";
+	d.style.top = y_pos + "px";
 }
 
 //set the var to the good start value
 var isCtrl = document.onkeyup=function(e) {
-    return e.which == 17
+	return e.which == 17
 };
 
 //set ctrl state
 document.onkeyup=function(e) {
-    if(e.which == 17) isCtrl=false;
+	if(e.which == 17) isCtrl=false;
 }
 
 document.onkeydown=function(e){
-    if(e.which == 17)
+	if(e.which == 17)
 	{
 		isCtrl=true;
 	}
-    if(e.which == 82 && !isCtrl) {
-         if(oladata.hands.length != 0)
-		 {
+	if(e.which == 82 && !isCtrl) {
+		if(oladata.hands.length != 0)
+		{
+			//console.log("x: " + oladata.hands[0].palmPosition[0]);
+			//console.log("y: " + oladata.hands[0].palmPosition[2]);
+
 			if(oladata.hands[0].palmPosition[0] < Lx)
 			{
 				Lx = oladata.hands[0].palmPosition[0];
@@ -106,14 +109,16 @@ document.onkeydown=function(e){
 			}
 			if(oladata.hands[0].palmPosition[0] > Hx)
 			{
-				Lx = oladata.hands[0].palmPosition[0];
+				Hx = oladata.hands[0].palmPosition[0];
+				console.log(Hx);
 			}
 			if(oladata.hands[0].palmPosition[2] > Hy)
 			{
-				Ly = oladata.hands[0].palmPosition[2];
+				Hy = oladata.hands[0].palmPosition[2];
+				console.log(Hy);
 			}
-		 }
-    }
+		}
+	}
 }
 
 </script>
@@ -122,17 +127,17 @@ document.onkeydown=function(e){
 
 <style>
 div.absolute {
-    position: absolute;
-    left: 450px;
-    top: 80px;
-    right: 0;
+	position: absolute;
+	left: 450px;
+	top: 80px;
+	right: 0;
 }
 </style>
 
 <html>
-<body onload="init();" >
-<div  class="absolute" id="coucou">
-TEST
-</div>
-</body>
+	<body onload="init();" >
+		<div  class="absolute" id="coucou">
+			TEST
+		</div>
+	</body>
 </html>
